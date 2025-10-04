@@ -1,0 +1,122 @@
+# GANPI Demo Commands for Hackathon
+# Copy and paste these commands to showcase GANPI's capabilities
+
+# ===========================================
+# 🗂️ FILE MANAGEMENT (Classic & Impressive)
+# ===========================================
+
+# Batch organization
+ganpi "Move all .txt files from Downloads to Documents/notes"
+ganpi "Delete all .DS_Store and temporary files in this folder"
+ganpi "Organize my Downloads folder by file type into separate folders"
+
+# Archiving
+ganpi "Zip all PDFs in my Downloads folder into 'school_papers.zip'"
+ganpi "Extract all .zip files in Downloads to a new folder called 'extracted'"
+
+# Renaming in bulk
+ganpi "Rename all .png files to have the prefix 'holiday_'"
+ganpi "Rename all photos to use the date they were taken"
+
+# ===========================================
+# 🧠 DEV PRODUCTIVITY (Hackathon Crowd-Pleaser)
+# ===========================================
+
+# Project setup
+ganpi "Initialize a new git repository here and make the first commit"
+ganpi "Create a new Node.js project with Express and install all dependencies"
+
+# Quick server launch
+ganpi "Start a simple HTTP server on port 8080"
+ganpi "Start a Python web server in the current directory"
+
+# Build and run
+ganpi "Compile all .cpp files in src and run the output binary"
+ganpi "Build this project and run all tests"
+
+# Container helpers
+ganpi "List all Docker containers that are running"
+ganpi "Stop all running Docker containers"
+
+# ===========================================
+# 🖼️ MEDIA & IMAGE OPERATIONS (Flashy for Demos)
+# ===========================================
+
+# Image resize
+ganpi "Resize all images in Pictures to 1080p"
+ganpi "Create thumbnails for all images in the current directory"
+
+# Format conversion
+ganpi "Convert all PNGs in this folder to JPEG"
+ganpi "Convert all .mov files to .mp4 format"
+
+# Video tasks
+ganpi "Extract audio from video.mp4 and save it as podcast.mp3"
+ganpi "Create a slideshow video from all images in this folder"
+
+# ===========================================
+# 📂 INFORMATION RETRIEVAL & SEARCH
+# ===========================================
+
+# Text search
+ganpi "Find all files containing the word 'token' in the src directory"
+ganpi "Search for TODO comments in all Python files"
+ganpi "Find all files with 'report' in their name inside Documents"
+
+# Recently modified files
+ganpi "List files I modified today"
+ganpi "Show me the largest files in this directory"
+
+# ===========================================
+# 🔒 SYSTEM UTILITIES (Power User Vibes)
+# ===========================================
+
+# Resource monitoring
+ganpi "Show me the top 10 processes using the most RAM"
+ganpi "Display disk usage for all mounted drives"
+
+# System info
+ganpi "How much space am I using in my home directory?"
+ganpi "Show me system uptime and current users"
+
+# Quick app launch
+ganpi "Open Visual Studio Code"
+ganpi "Launch Firefox browser"
+
+# ===========================================
+# 🎯 HACKATHON WINNING DEMOS
+# ===========================================
+
+# The "WOW" factor commands that impress judges:
+
+# 1. File Organization Magic
+ganpi "Organize my entire Downloads folder by file type and date into a clean folder structure"
+
+# 2. Developer Workflow Automation
+ganpi "Set up a complete development environment: create project structure, initialize git, install dependencies, and run the application"
+
+# 3. Media Processing Pipeline
+ganpi "Process all photos from my camera: resize to web-friendly dimensions, create thumbnails, and organize by date taken"
+
+# 4. System Maintenance
+ganpi "Clean up my system: remove temporary files, clear caches, and show me what's using the most disk space"
+
+# 5. Project Management
+ganpi "Find all TODO and FIXME comments across my entire codebase and create a summary report"
+
+# ===========================================
+# 🎭 FUN & QUIRKY COMMANDS (Judges Remember These)
+# ===========================================
+
+# Easter eggs
+ganpi "Tell me a joke"
+ganpi "What's the weather like today?"
+ganpi "Generate a random password for me"
+
+# Productivity tricks
+ganpi "Set a 25 minute timer and notify me when it's done"
+ganpi "Remind me to take a break in 2 hours"
+
+# Creative commands
+ganpi "Create a backup of all my important documents with today's date"
+ganpi "Generate a report of all the changes I made to files this week"
