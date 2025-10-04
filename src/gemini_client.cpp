@@ -1,8 +1,15 @@
 #include "ganpi.h"
-#include <curl/curl.h>
-#include <nlohmann/json.hpp>
 #include <iostream>
 #include <sstream>
+
+#ifdef _WIN32
+#include <windows.h>
+#include <wininet.h>
+#pragma comment(lib, "wininet.lib")
+#else
+#include <curl/curl.h>
+#include <nlohmann/json.hpp>
+#endif
 
 namespace ganpi {
 

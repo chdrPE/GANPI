@@ -7,19 +7,13 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Include directories
 include_directories(include)
 
-# Source files - use Windows-specific versions
+# Source files - use simple version for Windows
+file(GLOB_RECURSE SOURCES "src/*.cpp" "src/*.c")
+
+# Replace gemini_client.cpp with simple version on Windows
 if(WIN32)
-    # Windows-specific source files
-    set(SOURCES
-        src/main.cpp
-        src/ganpi.cpp
-        src/config.cpp
-        src/gemini_client_simple.cpp
-        src/command_executor_windows.cpp
-    )
-else()
-    # Linux/macOS source files
-    file(GLOB_RECURSE SOURCES "src/*.cpp" "src/*.c")
+    list(REMOVE_ITEM SOURCES "src/gemini_client.cpp")
+    list(APPEND SOURCES "src/gemini_client_simple.cpp")
 endif()
 
 # Create executable
