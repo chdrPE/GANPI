@@ -2,48 +2,57 @@
 #include <iostream>
 #include <string>
 #include <fstream>
+#include <cstdlib>
 
 namespace ganpi {
 
-GANPI::GANPI() : config_(Config::getInstance()) {
+GANPI::GANPI() : config_(Config::getInstance()), verbose_output_(false), show_context_(false) {
 }
 
-bool GANPI::initialize() {
-    // Try to load configuration
-    bool config_loaded = config_.loadFromFile();
-    std::cout << "[INFO] Config loaded: " << (config_loaded ? "YES" : "NO") << std::endl;
+bool GANPI::initialize(bool verbose_output, bool show_context) {
+    verbose_output_ = verbose_output;
+    show_context_ = show_context;
     
-    std::string api_key = config_.getGeminiApiKey();
-    std::cout << "[INFO] API key loaded: " << (api_key.empty() ? "NO" : "YES (length: " + std::to_string(api_key.length()) + ")") << std::endl;
-    if (!api_key.empty()) {
-        std::cout << "[INFO] API key preview: " << api_key.substr(0, 8) << "..." << std::endl;
-    }
+    std::string api_key;
     
-    if (!config_loaded || api_key.empty()) {
-        std::cout << "[WARNING] No API key found. Please set up your Gemini API key:" << std::endl;
-        std::cout << "   1. Go to https://makersuite.google.com/app/apikey" << std::endl;
-        std::cout << "   2. Create a new API key" << std::endl;
-        std::cout << "   3. Enter it below:" << std::endl;
-        std::cout << "\n   API Key: ";
-        
-        std::string api_key;
-        std::getline(std::cin, api_key);
-        
-        if (api_key.empty()) {
-            std::cout << "[ERROR] No API key provided. Cannot initialize GANPI." << std::endl;
-            return false;
+    // First, try to get API key from environment variable
+    const char* env_api_key = std::getenv("GEMINI_API_KEY");
+    if (env_api_key != nullptr) {
+        api_key = std::string(env_api_key);
+        if (verbose_output_) {
+            std::cout << "[INFO] API key loaded from environment variable" << std::endl;
+            std::cout << "[INFO] API key preview: " << api_key.substr(0, 8) << "..." << std::endl;
+        }
+    } else {
+        // Fallback to config file
+        bool config_loaded = config_.loadFromFile();
+        if (verbose_output_) {
+            std::cout << "[INFO] Config loaded: " << (config_loaded ? "YES" : "NO") << std::endl;
         }
         
-        config_.setGeminiApiKey(api_key);
-        config_.saveToFile();
-        std::cout << "[SUCCESS] API key saved!" << std::endl;
+        api_key = config_.getGeminiApiKey();
+        if (verbose_output_) {
+            std::cout << "[INFO] API key loaded from config: " << (api_key.empty() ? "NO" : "YES (length: " + std::to_string(api_key.length()) + ")") << std::endl;
+            if (!api_key.empty()) {
+                std::cout << "[INFO] API key preview: " << api_key.substr(0, 8) << "..." << std::endl;
+            }
+        }
     }
     
-    // Initialize Gemini client
-    gemini_client_ = std::make_unique<GeminiClient>(config_.getGeminiApiKey());
+    if (api_key.empty()) {
+        // Fallback: Use hardcoded API key for demo purposes
+        api_key = "AIzaSyDtqHIV0HHocJCCOXlU_o3hMGAds-ICJz8";
+        if (verbose_output_) {
+            std::cout << "[INFO] Using hardcoded API key for demo" << std::endl;
+            std::cout << "[INFO] API key preview: " << api_key.substr(0, 8) << "..." << std::endl;
+        }
+    }
+    
+    // Initialize Gemini client with the API key we found
+    gemini_client_ = std::make_unique<GeminiClient>(api_key);
     
     // Validate API key
-    if (!gemini_client_->validateApiKey()) {
+    if (!gemini_client_->validateApiKey(verbose_output_)) {
         std::cout << "[ERROR] Invalid API key. Please check your Gemini API key." << std::endl;
         return false;
     }
@@ -60,10 +69,12 @@ void GANPI::processCommand(const std::string& natural_language) {
         return;
     }
     
-    std::cout << "\n[INFO] Sending to API..." << std::endl;
+    if (verbose_output_) {
+        std::cout << "\n[INFO] Sending to API..." << std::endl;
+    }
     
     // Get command from Gemini
-    std::string shell_command = gemini_client_->interpretCommand(natural_language);
+    std::string shell_command = gemini_client_->interpretCommand(natural_language, verbose_output_, show_context_);
     
     if (shell_command.empty()) {
         std::cout << "[ERROR] Could not interpret the command. Please try rephrasing." << std::endl;
@@ -77,7 +88,9 @@ void GANPI::processCommand(const std::string& natural_language) {
     auto result = executor_->executeWithConfirmation(shell_command);
     
     if (result.success) {
-        std::cout << "\n[INFO] Executing..." << std::endl;
+        if (verbose_output_) {
+            std::cout << "\n[INFO] Executing..." << std::endl;
+        }
         std::cout << result.output;
         std::cout << "\n[SUCCESS] Done" << std::endl;
     } else {
@@ -120,14 +133,21 @@ GANPI - Gemini-Assisted Natural Processing Interface
 
 USAGE:
     ganpi "natural language command"    # Execute a single command
+    ganpi -c "command"                  # Show context (directory structure)
+    ganpi -o "command"                  # Show full API output
+    ganpi -c -o "command"               # Show both context and API output
     ganpi summarize "filename.txt"      # Summarize file contents
     ganpi --interactive                 # Start interactive mode
     ganpi --help                        # Show this help
 
+FLAGS:
+    -c, --context    Show directory structure and prompt sent to API
+    -o, --output     Show full API response and debugging information
+
 EXAMPLES:
     ganpi "Find all PDF files in Downloads and zip them"
-    ganpi "Move all .txt files from Downloads to Documents/notes"
-    ganpi "Delete all .DS_Store files in this folder"
+    ganpi -c "Move all .txt files from Downloads to Documents/notes"
+    ganpi -o "Delete all .DS_Store files in this folder"
     ganpi "Resize all images in Pictures to 1080p"
     ganpi "Start a simple HTTP server on port 8080"
     ganpi "Show me the top 10 processes using the most RAM"
@@ -141,6 +161,7 @@ FEATURES:
     * Confirmation prompts for potentially risky commands
     * Command preview before execution
     * Interactive mode for multiple commands
+    * Clean output by default (use -c -o for debugging)
 
 SETUP:
     1. Get a Gemini API key from https://makersuite.google.com/app/apikey

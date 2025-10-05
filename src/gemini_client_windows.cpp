@@ -33,9 +33,12 @@ GeminiClient::GeminiClient(const std::string& api_key)
     : api_key_(api_key), model_("gemini-2.5-flash") {
 }
 
-std::string GeminiClient::interpretCommand(const std::string& natural_language) {
+std::string GeminiClient::interpretCommand(const std::string& natural_language, bool verbose_output, bool show_context) {
     std::string prompt = buildPrompt(natural_language);
-    std::cout << "prompt sent to api: " << prompt << std::endl;
+    
+    if (show_context) {
+        std::cout << "prompt sent to api: " << prompt << std::endl;
+    }
     
     // Build JSON request manually for Windows
     std::string json_request = "{"
@@ -55,8 +58,10 @@ std::string GeminiClient::interpretCommand(const std::string& natural_language) 
     
     std::string response = makeHttpRequest(url, json_request);
     
-    std::cout << "[INFO] API Response length: " << response.length() << " bytes" << std::endl;
-    std::cout << "[DEBUG] API Response preview: " << response.substr(0, 300) << std::endl;
+    if (verbose_output) {
+        std::cout << "[INFO] API Response length: " << response.length() << " bytes" << std::endl;
+        std::cout << "[DEBUG] API Response preview: " << response.substr(0, 300) << std::endl;
+    }
     
     // Parse response manually
     std::string command = parseGeminiResponse(response);
@@ -91,12 +96,16 @@ std::string GeminiClient::summarizeContent(const std::string& content) {
     return summary;
 }
 
-bool GeminiClient::validateApiKey() {
+bool GeminiClient::validateApiKey(bool verbose_output) {
     std::string url = "https://generativelanguage.googleapis.com/v1beta/models?key=" + api_key_;
-    std::cout << "[INFO] Validating API key with URL: " << url.substr(0, 50) << "..." << std::endl;
+    if (verbose_output) {
+        std::cout << "[INFO] Validating API key with URL: " << url.substr(0, 50) << "..." << std::endl;
+    }
     
     std::string response = makeHttpRequest(url, "");
-    std::cout << "[INFO] Response received: " << (response.empty() ? "EMPTY" : std::to_string(response.length()) + " bytes") << std::endl;
+    if (verbose_output) {
+        std::cout << "[INFO] Response received: " << (response.empty() ? "EMPTY" : std::to_string(response.length()) + " bytes") << std::endl;
+    }
     
     if (response.empty()) {
         std::cout << "[ERROR] No response from API - check internet connection" << std::endl;
@@ -104,9 +113,11 @@ bool GeminiClient::validateApiKey() {
     }
     
     bool is_valid = response.find("\"models\"") != std::string::npos;
-    std::cout << "[RESULT] API key validation: " << (is_valid ? "VALID" : "INVALID") << std::endl;
+    if (verbose_output) {
+        std::cout << "[RESULT] API key validation: " << (is_valid ? "VALID" : "INVALID") << std::endl;
+    }
     
-    if (!is_valid) {
+    if (!is_valid && verbose_output) {
         std::cout << "[DEBUG] Response preview: " << response.substr(0, 200) << std::endl;
     }
     
@@ -292,32 +303,24 @@ std::string GeminiClient::parseGeminiResponse(const std::string& response) {
     
     size_t candidates_start = response.find("\"candidates\":");
     if (candidates_start == std::string::npos) {
-        std::cout << "[DEBUG] No candidates found in response" << std::endl;
         return "echo 'No candidates found in API response'";
     }
-    std::cout << "[DEBUG] Found candidates at position: " << candidates_start << std::endl;
     
     // Find the first candidate
     size_t content_start = response.find("\"content\":", candidates_start);
     if (content_start == std::string::npos) {
-        std::cout << "[DEBUG] No content found after candidates" << std::endl;
         return "echo 'No content found in API response'";
     }
-    std::cout << "[DEBUG] Found content at position: " << content_start << std::endl;
     
     // Find parts array
     size_t parts_start = response.find("\"parts\":", content_start);
     if (parts_start == std::string::npos) {
-        std::cout << "[DEBUG] No parts found after content" << std::endl;
         return "echo 'No parts found in API response'";
     }
-    std::cout << "[DEBUG] Found parts at position: " << parts_start << std::endl;
     
     // Find the first part with text - look for "text":" (with possible whitespace)
     size_t text_start = response.find("\"text\"", parts_start);
     if (text_start == std::string::npos) {
-        std::cout << "[DEBUG] Looking for text in response after parts_start: " << parts_start << std::endl;
-        std::cout << "[DEBUG] Response around parts: " << response.substr(parts_start, 200) << std::endl;
         return "echo 'No text found in API response'";
     }
     
@@ -416,28 +419,24 @@ std::string GeminiClient::parseSummaryResponse(const std::string& response) {
     
     size_t candidates_start = response.find("\"candidates\":");
     if (candidates_start == std::string::npos) {
-        std::cout << "[DEBUG] No candidates found in summary response" << std::endl;
         return "No candidates found in API response";
     }
     
     // Find the first candidate
     size_t content_start = response.find("\"content\":", candidates_start);
     if (content_start == std::string::npos) {
-        std::cout << "[DEBUG] No content found after candidates" << std::endl;
         return "No content found in API response";
     }
     
     // Find parts array
     size_t parts_start = response.find("\"parts\":", content_start);
     if (parts_start == std::string::npos) {
-        std::cout << "[DEBUG] No parts found after content" << std::endl;
         return "No parts found in API response";
     }
     
     // Find the first part with text
     size_t text_start = response.find("\"text\"", parts_start);
     if (text_start == std::string::npos) {
-        std::cout << "[DEBUG] No text found in summary response" << std::endl;
         return "No text found in API response";
     }
     

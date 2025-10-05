@@ -9,27 +9,59 @@ cd build
 
 REM Configure with CMake using MinGW generator
 echo Configuring build...
-cmake .. -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release
+cmake .. -DCMAKE_BUILD_TYPE=Release
 
 REM Build the project
 echo Building...
 cmake --build . --config Release
 
-REM Copy config file if it exists in parent directory
-if exist ..\.ganpi.config (
-    echo Copying config file...
-    copy ..\.ganpi.config .ganpi.config >nul 2>&1
-)
-
-REM Check if build was successful
+REM Check if build was successful first
 if %ERRORLEVEL% EQU 0 (
     echo.
     echo [SUCCESS] Build successful!
-    echo You can now run: .\ganpi.exe --help
     echo.
-    echo Quick test: .\ganpi.exe "list all files in current directory"
+    
+    REM Copy config file if it exists in parent directory
+    if exist ..\.ganpi_config (
+        echo Copying config file...
+        copy ..\.ganpi_config .ganpi_config >nul 2>&1
+        copy ..\.ganpi_config ..\.ganpi_config >nul 2>&1
+    )
+    
+    REM Get the full path to the executable
+    set "GANPI_PATH=%~dp0build\Release"
+    set "GANPI_EXE=%GANPI_PATH%\ganpi.exe"
+    
+    REM Check if ganpi.exe actually exists
+    if exist "%GANPI_EXE%" (
+        echo.
+        echo [SETUP] Adding GANPI to system PATH...
+        echo.
+        
+        REM Add to user PATH (permanent)
+        echo Adding to user PATH: %GANPI_PATH%
+        setx PATH "%PATH%;%GANPI_PATH%" >nul 2>&1
+        
+        if %ERRORLEVEL% EQU 0 (
+            echo [SUCCESS] GANPI added to PATH successfully!
+            echo.
+            echo You can now use 'ganpi' from anywhere:
+            echo   ganpi "create a test file"
+            echo   ganpi "find all PDF files"
+            echo   ganpi --help
+            echo.
+            echo [NOTE] You may need to restart your command prompt for PATH changes to take effect.
+        ) else (
+            echo [WARNING] Could not add to PATH automatically.
+            echo You can manually add this path to your PATH environment variable:
+            echo   %GANPI_PATH%
+        )
+    ) else (
+        echo [ERROR] Executable not found at: %GANPI_EXE%
+    )
+    
     echo.
-    echo Executable location: build\ganpi.exe
+    echo Executable location: %GANPI_EXE%
 ) else (
     echo.
     echo [ERROR] Build failed!
@@ -38,6 +70,7 @@ if %ERRORLEVEL% EQU 0 (
     pause
     exit /b 1
 )
+
 
 cd ..
 pause

@@ -34,13 +34,13 @@ public:
     GeminiClient(const std::string& api_key);
     
     // Send natural language query to Gemini and get shell command
-    std::string interpretCommand(const std::string& natural_language);
+    std::string interpretCommand(const std::string& natural_language, bool verbose_output = false, bool show_context = false);
     
     // Summarize content using Gemini
     std::string summarizeContent(const std::string& content);
     
     // Check if API key is valid
-    bool validateApiKey();
+    bool validateApiKey(bool verbose_output = false);
     
 private:
     std::string api_key_;
@@ -83,7 +83,7 @@ public:
     ~GANPI() = default;
     
     // Initialize the application
-    bool initialize();
+    bool initialize(bool verbose_output = false, bool show_context = false);
     
     // Process a natural language command
     void processCommand(const std::string& natural_language);
@@ -97,10 +97,16 @@ public:
     // Summarize file contents
     void summarizeFile(const std::string& filename);
     
+    // Set verbose flags
+    void setVerboseOutput(bool verbose) { verbose_output_ = verbose; }
+    void setShowContext(bool context) { show_context_ = context; }
+    
 private:
     std::unique_ptr<GeminiClient> gemini_client_;
     std::unique_ptr<CommandExecutor> executor_;
     Config& config_;
+    bool verbose_output_;
+    bool show_context_;
     
     void printWelcomeMessage();
     void printCommandPreview(const std::string& command);
