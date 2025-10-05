@@ -30,6 +30,10 @@ add_executable(ganpi ${SOURCES})
 # Link libraries
 if(WIN32)
     target_link_libraries(ganpi wininet)
+    # Add Windows-specific libraries for _popen and other functions
+    if(MSVC)
+        target_link_libraries(ganpi)
+    endif()
 else()
     target_link_libraries(ganpi ${CURL_LIBRARIES} nlohmann_json::nlohmann_json)
 endif()

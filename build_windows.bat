@@ -7,23 +7,29 @@ if exist build rmdir /s /q build
 mkdir build
 cd build
 
-REM Configure with CMake
+REM Configure with CMake using MinGW generator
 echo 📋 Configuring build...
-cmake .. -DCMAKE_BUILD_TYPE=Release
+cmake .. -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release
 
 REM Build the project
 echo 🔨 Building...
 cmake --build . --config Release
 
+REM Copy config file if it exists in parent directory
+if exist ..\.ganpi.config (
+    echo 📋 Copying config file...
+    copy ..\.ganpi.config .ganpi.config >nul 2>&1
+)
+
 REM Check if build was successful
 if %ERRORLEVEL% EQU 0 (
     echo.
     echo ✅ Build successful!
-    echo 🚀 You can now run: Release\ganpi.exe --help
+    echo 🚀 You can now run: .\ganpi.exe --help
     echo.
-    echo 💡 Quick test: Release\ganpi.exe "list all files in current directory"
+    echo 💡 Quick test: .\ganpi.exe "list all files in current directory"
     echo.
-    echo 📁 Executable location: build\Release\ganpi.exe
+    echo 📁 Executable location: build\ganpi.exe
 ) else (
     echo.
     echo ❌ Build failed!

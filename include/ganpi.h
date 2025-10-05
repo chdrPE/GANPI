@@ -18,8 +18,8 @@ public:
     void setModel(const std::string& model);
     std::string getModel() const;
     
-    bool loadFromFile(const std::string& filename = ".ganpi_config");
-    void saveToFile(const std::string& filename = ".ganpi_config");
+    bool loadFromFile(const std::string& filename = ".ganpi.config");
+    void saveToFile(const std::string& filename = ".ganpi.config");
     
 private:
     Config() = default;

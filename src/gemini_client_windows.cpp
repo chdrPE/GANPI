@@ -9,11 +9,14 @@
 #include <windows.h>
 #include <wininet.h>
 #pragma comment(lib, "wininet.lib")
+#else
+#include <curl/curl.h>
 #endif
 
 namespace ganpi {
 
-// Callback function for libcurl to write response data
+// Callback function for libcurl to write response data (Linux/macOS only)
+#ifndef _WIN32
 static size_t WriteCallback(void* contents, size_t size, size_t nmemb, std::string* s) {
     size_t newLength = size * nmemb;
     try {
@@ -24,6 +27,7 @@ static size_t WriteCallback(void* contents, size_t size, size_t nmemb, std::stri
         return 0;
     }
 }
+#endif
 
 GeminiClient::GeminiClient(const std::string& api_key) 
     : api_key_(api_key), model_("gemini-2.5-flash") {
