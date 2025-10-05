@@ -5,50 +5,57 @@
 
 namespace ganpi {
 
-GANPI::GANPI() : config_(Config::getInstance()) {
+GANPI::GANPI() : config_(&Config::getInstance()) {
 }
 
 bool GANPI::initialize() {
-    std::cout << "🔧 Initializing GANPI..." << std::endl;
-    
-    // Try to load configuration
-    bool config_loaded = config_.loadFromFile();
-    
-    if (!config_loaded || config_.getGeminiApiKey().empty()) {
-        std::cout << "\n⚠️  No API key found. Let's set up your Gemini API key:" << std::endl;
-        std::cout << "   1. Go to https://makersuite.google.com/app/apikey" << std::endl;
-        std::cout << "   2. Create a new API key" << std::endl;
-        std::cout << "   3. Enter it below:" << std::endl;
-        std::cout << "\n   API Key: ";
+    try {
+        std::cout << "🔧 Initializing GANPI..." << std::endl;
         
-        std::string api_key;
-        std::getline(std::cin, api_key);
+        // Try to load configuration
+        bool config_loaded = config_->loadFromFile();
         
-        if (api_key.empty()) {
-            std::cout << "❌ No API key provided. Cannot initialize GANPI." << std::endl;
+        if (!config_loaded || config_->getGeminiApiKey().empty()) {
+            std::cout << "\n⚠️  No API key found. Let's set up your Gemini API key:" << std::endl;
+            std::cout << "   1. Go to https://makersuite.google.com/app/apikey" << std::endl;
+            std::cout << "   2. Create a new API key" << std::endl;
+            std::cout << "   3. Enter it below:" << std::endl;
+            std::cout << "\n   API Key: ";
+            
+            std::string api_key;
+            std::getline(std::cin, api_key);
+            
+            if (api_key.empty()) {
+                std::cout << "❌ No API key provided. Cannot initialize GANPI." << std::endl;
+                return false;
+            }
+            
+            config_->setGeminiApiKey(api_key);
+            config_->saveToFile();
+            std::cout << "✅ API key saved!" << std::endl;
+        }
+        
+        // Initialize Gemini client
+        gemini_client_ = std::make_unique<GeminiClient>(config_->getGeminiApiKey());
+        
+        // Validate API key
+        if (!gemini_client_->validateApiKey()) {
+            std::cout << "❌ Invalid API key. Please check your Gemini API key." << std::endl;
             return false;
         }
         
-        config_.setGeminiApiKey(api_key);
-        config_.saveToFile();
-        std::cout << "✅ API key saved!" << std::endl;
-    }
-    
-    // Initialize Gemini client
-    gemini_client_ = std::make_unique<GeminiClient>(config_.getGeminiApiKey());
-    
-    // Validate API key
-    std::cout << "🔑 Validating API key..." << std::endl;
-    if (!gemini_client_->validateApiKey()) {
-        std::cout << "❌ Invalid API key. Please check your Gemini API key." << std::endl;
+        // Initialize command executor
+        executor_ = std::make_unique<CommandExecutor>();
+        
+        std::cout << "✅ GANPI initialized successfully!" << std::endl;
+        return true;
+    } catch (const std::exception& e) {
+        std::cerr << "❌ Exception during initialization: " << e.what() << std::endl;
+        return false;
+    } catch (...) {
+        std::cerr << "❌ Unknown exception during initialization" << std::endl;
         return false;
     }
-    
-    // Initialize command executor
-    executor_ = std::make_unique<CommandExecutor>();
-    
-    std::cout << "✅ GANPI initialized successfully!" << std::endl;
-    return true;
 }
 
 void GANPI::processCommand(const std::string& natural_language) {

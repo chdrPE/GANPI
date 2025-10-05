@@ -44,7 +44,7 @@ private:
     std::string model_;
     
     std::string makeHttpRequest(const std::string& url, const std::string& data);
-    std::string buildPrompt(const std::string& user_input);
+    std::string buildPrompt(const std::string& user_input, const std::string& fs_context = "");
 };
 
 // Command executor for running shell commands
@@ -89,7 +89,7 @@ public:
 private:
     std::unique_ptr<GeminiClient> gemini_client_;
     std::unique_ptr<CommandExecutor> executor_;
-    Config& config_;
+    Config* config_;
     
     void printWelcomeMessage();
     void printCommandPreview(const std::string& command);
