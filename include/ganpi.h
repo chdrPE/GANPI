@@ -45,6 +45,10 @@ private:
     
     std::string makeHttpRequest(const std::string& url, const std::string& data);
     std::string buildPrompt(const std::string& user_input);
+    std::string getCurrentDirectoryStructure();
+    std::string escapeJsonString(const std::string& input);
+    std::string parseGeminiResponse(const std::string& response);
+    std::string decodeUnicodeEscapes(const std::string& text);
 };
 
 // Command executor for running shell commands

@@ -18,8 +18,6 @@ void printBanner() {
 }
 
 int main(int argc, char* argv[]) {
-    printBanner();
-    
     try {
         GANPI app;
         

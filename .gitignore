@@ -2,7 +2,6 @@
 build/
 cmake-build-*/
 vcpkg/
-.env
 
 # Compiled binaries
 ganpi

@@ -1,6 +1,8 @@
 #include "ganpi.h"
 #include <iostream>
 #include <sstream>
+#include <filesystem>
+#include <vector>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -31,6 +33,7 @@ GeminiClient::GeminiClient(const std::string& api_key)
 
 std::string GeminiClient::interpretCommand(const std::string& natural_language) {
     std::string prompt = buildPrompt(natural_language);
+    std::cout << "prompt sent to api: " << prompt << std::endl;
     
     nlohmann::json request_json;
     request_json["contents"] = nlohmann::json::array();
@@ -110,6 +113,35 @@ bool GeminiClient::validateApiKey() {
 }
 
 std::string GeminiClient::makeHttpRequest(const std::string& url, const std::string& data) {
+#ifdef _WIN32
+    // Windows implementation using WinINet
+    HINTERNET hInternet = InternetOpenA("GANPI/1.0", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
+    if (!hInternet) return "";
+    
+    HINTERNET hConnect = InternetOpenUrlA(hInternet, url.c_str(), 
+                                          data.empty() ? NULL : data.c_str(), 
+                                          data.empty() ? 0 : static_cast<DWORD>(data.length()),
+                                          INTERNET_FLAG_RELOAD | INTERNET_FLAG_NO_CACHE_WRITE, 0);
+    if (!hConnect) {
+        InternetCloseHandle(hInternet);
+        return "";
+    }
+    
+    std::string response;
+    char buffer[4096];
+    DWORD bytesRead;
+    
+    while (InternetReadFile(hConnect, buffer, sizeof(buffer) - 1, &bytesRead) && bytesRead > 0) {
+        buffer[bytesRead] = '\0';
+        response += buffer;
+    }
+    
+    InternetCloseHandle(hConnect);
+    InternetCloseHandle(hInternet);
+    
+    return response;
+#else
+    // Linux/macOS implementation using libcurl
     CURL* curl;
     CURLcode res;
     std::string response_data;
@@ -140,24 +172,44 @@ std::string GeminiClient::makeHttpRequest(const std::string& url, const std::str
     }
     
     return response_data;
+#endif
+}
+
+std::string GeminiClient::getCurrentDirectoryStructure() {
+    std::string structure;
+    try {
+        std::string current_path = std::filesystem::current_path().string();
+        structure = "Current directory: " + current_path + "\nDirectory structure:\n";
+        
+        // Get directory contents
+        for (const auto& entry : std::filesystem::directory_iterator(current_path)) {
+            std::string name = entry.path().filename().string();
+            if (entry.is_directory()) {
+                structure += "  [DIR]  " + name + "/\n";
+            } else {
+                structure += "  [FILE] " + name + "\n";
+            }
+        }
+    } catch (const std::exception& e) {
+        structure = "Could not read directory structure: " + std::string(e.what());
+    }
+    return structure;
 }
 
 std::string GeminiClient::buildPrompt(const std::string& user_input) {
-    return R"(You are a command-line assistant that converts natural language requests into precise shell commands.
-
-IMPORTANT RULES:
-1. ONLY respond with the shell command needed to fulfill the request
-2. Do NOT include explanations or additional text
-3. Use safe, standard commands that work on Unix-like systems (Linux/macOS)
-4. For file operations, use relative paths when possible
-5. For dangerous operations (rm -rf, sudo, etc.), add confirmation prompts
-6. Format your response as: ```bash
-<command>
-```
-
-User request: )" + user_input + R"(
-
-Shell command:)";
+    std::string directory_info = getCurrentDirectoryStructure();
+    
+    return "Context:\n" + directory_info + "\n" +
+           "You are a command-line assistant that converts natural language requests into precise Windows shell commands.\n\n" +
+           "IMPORTANT RULES:\n" +
+           "1. ONLY respond with the Windows shell command needed to fulfill the request\n" +
+           "2. Do NOT include explanations or additional text\n" +
+           "3. Use Windows commands (dir, copy, move, del, etc.)\n" +
+           "4. For file operations, use relative paths when possible\n" +
+           "5. For dangerous operations, add confirmation prompts\n" +
+           "6. Format your response as: ```cmd\n<command>\n```\n\n" +
+           "User request: " + user_input + "\n\n" +
+           "Windows shell command:";
 }
 
 } // namespace ganpi

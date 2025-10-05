@@ -19,9 +19,11 @@ REM Check if build was successful
 if %ERRORLEVEL% EQU 0 (
     echo.
     echo ✅ Build successful!
-    echo 🚀 You can now run: ganpi.exe --help
+    echo 🚀 You can now run: Release\ganpi.exe --help
     echo.
-    echo 💡 Quick test: ganpi.exe "list all files in current directory"
+    echo 💡 Quick test: Release\ganpi.exe "list all files in current directory"
+    echo.
+    echo 📁 Executable location: build\Release\ganpi.exe
 ) else (
     echo.
     echo ❌ Build failed!
@@ -35,3 +37,4 @@ if %ERRORLEVEL% EQU 0 (
 )
 
 cd ..
+pause

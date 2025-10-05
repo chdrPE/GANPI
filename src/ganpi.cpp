@@ -9,13 +9,18 @@ GANPI::GANPI() : config_(Config::getInstance()) {
 }
 
 bool GANPI::initialize() {
-    std::cout << "🔧 Initializing GANPI..." << std::endl;
-    
     // Try to load configuration
     bool config_loaded = config_.loadFromFile();
+    std::cout << "📁 Config loaded: " << (config_loaded ? "YES" : "NO") << std::endl;
     
-    if (!config_loaded || config_.getGeminiApiKey().empty()) {
-        std::cout << "\n⚠️  No API key found. Let's set up your Gemini API key:" << std::endl;
+    std::string api_key = config_.getGeminiApiKey();
+    std::cout << "🔑 API key loaded: " << (api_key.empty() ? "NO" : "YES (length: " + std::to_string(api_key.length()) + ")") << std::endl;
+    if (!api_key.empty()) {
+        std::cout << "🔑 API key preview: " << api_key.substr(0, 8) << "..." << std::endl;
+    }
+    
+    if (!config_loaded || api_key.empty()) {
+        std::cout << "⚠️  No API key found. Please set up your Gemini API key:" << std::endl;
         std::cout << "   1. Go to https://makersuite.google.com/app/apikey" << std::endl;
         std::cout << "   2. Create a new API key" << std::endl;
         std::cout << "   3. Enter it below:" << std::endl;
@@ -38,7 +43,6 @@ bool GANPI::initialize() {
     gemini_client_ = std::make_unique<GeminiClient>(config_.getGeminiApiKey());
     
     // Validate API key
-    std::cout << "🔑 Validating API key..." << std::endl;
     if (!gemini_client_->validateApiKey()) {
         std::cout << "❌ Invalid API key. Please check your Gemini API key." << std::endl;
         return false;
@@ -47,7 +51,6 @@ bool GANPI::initialize() {
     // Initialize command executor
     executor_ = std::make_unique<CommandExecutor>();
     
-    std::cout << "✅ GANPI initialized successfully!" << std::endl;
     return true;
 }
 
@@ -57,7 +60,7 @@ void GANPI::processCommand(const std::string& natural_language) {
         return;
     }
     
-    std::cout << "\n🧠 Processing: \"" << natural_language << "\"" << std::endl;
+    std::cout << "\nsending to api...." << std::endl;
     
     // Get command from Gemini
     std::string shell_command = gemini_client_->interpretCommand(natural_language);
@@ -68,21 +71,18 @@ void GANPI::processCommand(const std::string& natural_language) {
     }
     
     // Show what command will be executed
-    printCommandPreview(shell_command);
+    std::cout << "prompt to execute: " << shell_command << std::endl;
     
     // Execute with confirmation
     auto result = executor_->executeWithConfirmation(shell_command);
     
     if (result.success) {
-        std::cout << "\n✅ Command executed successfully!" << std::endl;
-        if (!result.output.empty()) {
-            std::cout << "\n📄 Output:" << std::endl;
-            std::cout << result.output << std::endl;
-        }
+        std::cout << "\nexecuting..." << std::endl;
+        std::cout << result.output;
+        std::cout << "\ndone" << std::endl;
     } else {
         std::cout << "\n❌ Command failed: " << result.error << std::endl;
         if (!result.output.empty()) {
-            std::cout << "\n📄 Output:" << std::endl;
             std::cout << result.output << std::endl;
         }
     }

@@ -55,15 +55,7 @@ CommandExecutor::ExecutionResult CommandExecutor::execute(const std::string& com
 }
 
 CommandExecutor::ExecutionResult CommandExecutor::executeWithConfirmation(const std::string& command) {
-    std::cout << "\n🔍 Command to execute:" << std::endl;
-    std::cout << "   " << command << std::endl;
-    
-    if (isDangerousCommand(command)) {
-        std::cout << "\n⚠️  WARNING: This command may be potentially dangerous!" << std::endl;
-        std::cout << "   Proceed? (y/N): ";
-    } else {
-        std::cout << "\n   Execute? (Y/n): ";
-    }
+    std::cout << "(Y/N): ";
     
     std::string response;
     std::getline(std::cin, response);
@@ -77,7 +69,6 @@ CommandExecutor::ExecutionResult CommandExecutor::executeWithConfirmation(const 
     }
     
     if (should_execute) {
-        std::cout << "\n🚀 Executing..." << std::endl;
         return execute(command);
     } else {
         std::cout << "❌ Command cancelled." << std::endl;

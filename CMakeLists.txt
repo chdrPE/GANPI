@@ -14,16 +14,25 @@ if(WIN32)
         src/main.cpp
         src/ganpi.cpp
         src/config.cpp
-        src/gemini_client_simple.cpp
+        src/gemini_client_windows.cpp
         src/command_executor_windows.cpp
     )
 else()
-    # Linux/macOS source files
+    # Linux/macOS source files with curl
+    find_package(CURL REQUIRED)
+    find_package(nlohmann_json REQUIRED)
     file(GLOB_RECURSE SOURCES "src/*.cpp" "src/*.c")
 endif()
 
 # Create executable
 add_executable(ganpi ${SOURCES})
+
+# Link libraries
+if(WIN32)
+    target_link_libraries(ganpi wininet)
+else()
+    target_link_libraries(ganpi ${CURL_LIBRARIES} nlohmann_json::nlohmann_json)
+endif()
 
 # Compiler flags
 if(MSVC)
