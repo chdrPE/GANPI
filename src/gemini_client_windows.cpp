@@ -276,8 +276,9 @@ std::string GeminiClient::buildPrompt(const std::string& user_input) {
            "2. Do NOT include explanations or additional text\n" +
            "3. Use Windows commands (dir, copy, move, del, etc.)\n" +
            "4. For file operations, use relative paths when possible\n" +
-           "5. For dangerous operations, add confirmation prompts\n" +
-           "6. Format your response as: ```cmd\n<command>\n```\n\n" +
+           "5. For folder deletion, use 'rmdir /s /q' to avoid confirmation prompts\n" +
+           "6. For file deletion, use 'del /q' to avoid confirmation prompts\n" +
+           "7. Format your response as: ```cmd\n<command>\n```\n\n" +
            "User request: " + user_input + "\n\n" +
            "Windows shell command:";
 }

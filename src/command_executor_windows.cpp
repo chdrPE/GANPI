@@ -126,8 +126,15 @@ bool CommandExecutor::isDangerousCommand(const std::string& command) {
     std::string lower_command = command;
     std::transform(lower_command.begin(), lower_command.end(), lower_command.begin(), ::tolower);
     
+    // Check if command has /q flag (quiet mode - non-interactive)
+    bool has_quiet_flag = (lower_command.find("/q") != std::string::npos);
+    
     for (const auto& keyword : dangerous_keywords) {
         if (lower_command.find(keyword) != std::string::npos) {
+            // If it has /q flag, it's non-interactive so it's safer
+            if (has_quiet_flag && (keyword == "del /s" || keyword == "rmdir /s")) {
+                return false; // Non-interactive deletion is safer
+            }
             return true;
         }
     }
