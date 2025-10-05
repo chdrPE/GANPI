@@ -36,6 +36,9 @@ public:
     // Send natural language query to Gemini and get shell command
     std::string interpretCommand(const std::string& natural_language);
     
+    // Summarize content using Gemini
+    std::string summarizeContent(const std::string& content);
+    
     // Check if API key is valid
     bool validateApiKey();
     
@@ -48,6 +51,7 @@ private:
     std::string getCurrentDirectoryStructure();
     std::string escapeJsonString(const std::string& input);
     std::string parseGeminiResponse(const std::string& response);
+    std::string parseSummaryResponse(const std::string& response);
     std::string decodeUnicodeEscapes(const std::string& text);
 };
 
@@ -89,6 +93,9 @@ public:
     
     // Show help information
     void showHelp();
+    
+    // Summarize file contents
+    void summarizeFile(const std::string& filename);
     
 private:
     std::unique_ptr<GeminiClient> gemini_client_;

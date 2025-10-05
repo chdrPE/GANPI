@@ -1,5 +1,5 @@
 @echo off
-echo 🧠 Starting GANPI...
+echo Starting GANPI...
 echo ==================
 
 REM Change to build directory where the executable and config are located

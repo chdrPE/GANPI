@@ -55,8 +55,8 @@ std::string GeminiClient::interpretCommand(const std::string& natural_language) 
     
     std::string response = makeHttpRequest(url, json_request);
     
-    std::cout << "📡 API Response length: " << response.length() << " bytes" << std::endl;
-    std::cout << "📄 API Response preview: " << response.substr(0, 300) << std::endl;
+    std::cout << "[INFO] API Response length: " << response.length() << " bytes" << std::endl;
+    std::cout << "[DEBUG] API Response preview: " << response.substr(0, 300) << std::endl;
     
     // Parse response manually
     std::string command = parseGeminiResponse(response);
@@ -64,23 +64,50 @@ std::string GeminiClient::interpretCommand(const std::string& natural_language) 
     return command;
 }
 
+std::string GeminiClient::summarizeContent(const std::string& content) {
+    // Build JSON request for summarization with higher token limits
+    std::string json_request = "{"
+        "\"contents\":[{"
+            "\"parts\":[{"
+                "\"text\":\"" + escapeJsonString(content) + "\""
+            "}]"
+        "}],"
+        "\"generationConfig\":{"
+            "\"temperature\":0.3,"
+            "\"maxOutputTokens\":4000"
+        "}"
+    "}";
+    
+    std::string url = "https://generativelanguage.googleapis.com/v1beta/models/" + 
+                      model_ + ":generateContent?key=" + api_key_;
+    
+    std::string response = makeHttpRequest(url, json_request);
+    
+    std::cout << "[INFO] API Response length: " << response.length() << " bytes" << std::endl;
+    
+    // Parse response for summarization (return raw text, not commands)
+    std::string summary = parseSummaryResponse(response);
+    
+    return summary;
+}
+
 bool GeminiClient::validateApiKey() {
     std::string url = "https://generativelanguage.googleapis.com/v1beta/models?key=" + api_key_;
-    std::cout << "🔍 Validating API key with URL: " << url.substr(0, 50) << "..." << std::endl;
+    std::cout << "[INFO] Validating API key with URL: " << url.substr(0, 50) << "..." << std::endl;
     
     std::string response = makeHttpRequest(url, "");
-    std::cout << "📡 Response received: " << (response.empty() ? "EMPTY" : std::to_string(response.length()) + " bytes") << std::endl;
+    std::cout << "[INFO] Response received: " << (response.empty() ? "EMPTY" : std::to_string(response.length()) + " bytes") << std::endl;
     
     if (response.empty()) {
-        std::cout << "❌ No response from API - check internet connection" << std::endl;
+        std::cout << "[ERROR] No response from API - check internet connection" << std::endl;
         return false;
     }
     
     bool is_valid = response.find("\"models\"") != std::string::npos;
-    std::cout << "✅ API key validation: " << (is_valid ? "VALID" : "INVALID") << std::endl;
+    std::cout << "[RESULT] API key validation: " << (is_valid ? "VALID" : "INVALID") << std::endl;
     
     if (!is_valid) {
-        std::cout << "🔍 Response preview: " << response.substr(0, 200) << std::endl;
+        std::cout << "[DEBUG] Response preview: " << response.substr(0, 200) << std::endl;
     }
     
     return is_valid;
@@ -265,32 +292,32 @@ std::string GeminiClient::parseGeminiResponse(const std::string& response) {
     
     size_t candidates_start = response.find("\"candidates\":");
     if (candidates_start == std::string::npos) {
-        std::cout << "🔍 Debug: No candidates found in response" << std::endl;
+        std::cout << "[DEBUG] No candidates found in response" << std::endl;
         return "echo 'No candidates found in API response'";
     }
-    std::cout << "🔍 Debug: Found candidates at position: " << candidates_start << std::endl;
+    std::cout << "[DEBUG] Found candidates at position: " << candidates_start << std::endl;
     
     // Find the first candidate
     size_t content_start = response.find("\"content\":", candidates_start);
     if (content_start == std::string::npos) {
-        std::cout << "🔍 Debug: No content found after candidates" << std::endl;
+        std::cout << "[DEBUG] No content found after candidates" << std::endl;
         return "echo 'No content found in API response'";
     }
-    std::cout << "🔍 Debug: Found content at position: " << content_start << std::endl;
+    std::cout << "[DEBUG] Found content at position: " << content_start << std::endl;
     
     // Find parts array
     size_t parts_start = response.find("\"parts\":", content_start);
     if (parts_start == std::string::npos) {
-        std::cout << "🔍 Debug: No parts found after content" << std::endl;
+        std::cout << "[DEBUG] No parts found after content" << std::endl;
         return "echo 'No parts found in API response'";
     }
-    std::cout << "🔍 Debug: Found parts at position: " << parts_start << std::endl;
+    std::cout << "[DEBUG] Found parts at position: " << parts_start << std::endl;
     
     // Find the first part with text - look for "text":" (with possible whitespace)
     size_t text_start = response.find("\"text\"", parts_start);
     if (text_start == std::string::npos) {
-        std::cout << "🔍 Debug: Looking for text in response after parts_start: " << parts_start << std::endl;
-        std::cout << "🔍 Debug: Response around parts: " << response.substr(parts_start, 200) << std::endl;
+        std::cout << "[DEBUG] Looking for text in response after parts_start: " << parts_start << std::endl;
+        std::cout << "[DEBUG] Response around parts: " << response.substr(parts_start, 200) << std::endl;
         return "echo 'No text found in API response'";
     }
     
@@ -379,6 +406,101 @@ std::string GeminiClient::parseGeminiResponse(const std::string& response) {
             return line;
         }
     }
+    
+    return unescaped_text;
+}
+
+std::string GeminiClient::parseSummaryResponse(const std::string& response) {
+    // Parse the Gemini API response format for summarization
+    // Look for candidates[0].content.parts[0].text
+    
+    size_t candidates_start = response.find("\"candidates\":");
+    if (candidates_start == std::string::npos) {
+        std::cout << "[DEBUG] No candidates found in summary response" << std::endl;
+        return "No candidates found in API response";
+    }
+    
+    // Find the first candidate
+    size_t content_start = response.find("\"content\":", candidates_start);
+    if (content_start == std::string::npos) {
+        std::cout << "[DEBUG] No content found after candidates" << std::endl;
+        return "No content found in API response";
+    }
+    
+    // Find parts array
+    size_t parts_start = response.find("\"parts\":", content_start);
+    if (parts_start == std::string::npos) {
+        std::cout << "[DEBUG] No parts found after content" << std::endl;
+        return "No parts found in API response";
+    }
+    
+    // Find the first part with text
+    size_t text_start = response.find("\"text\"", parts_start);
+    if (text_start == std::string::npos) {
+        std::cout << "[DEBUG] No text found in summary response" << std::endl;
+        return "No text found in API response";
+    }
+    
+    // Find the colon and opening quote after "text"
+    size_t colon_pos = response.find(":", text_start);
+    if (colon_pos == std::string::npos) {
+        return "No colon found after text";
+    }
+    
+    // Find the opening quote after the colon (skip any whitespace)
+    size_t quote_start = colon_pos + 1;
+    while (quote_start < response.length() && (response[quote_start] == ' ' || response[quote_start] == '\t')) {
+        quote_start++;
+    }
+    
+    if (quote_start >= response.length() || response[quote_start] != '"') {
+        return "No opening quote found after text:";
+    }
+    
+    text_start = quote_start + 1; // Position after the opening quote
+    
+    // Find the end of the text field - this is tricky because text can contain quotes
+    // We need to find the closing quote that's not escaped
+    size_t text_end = text_start;
+    bool escaped = false;
+    while (text_end < response.length()) {
+        if (response[text_end] == '\\' && !escaped) {
+            escaped = true;
+            text_end++;
+            continue;
+        }
+        if (response[text_end] == '"' && !escaped) {
+            break;
+        }
+        escaped = false;
+        text_end++;
+    }
+    
+    if (text_end >= response.length()) {
+        return "Malformed text in API response";
+    }
+    
+    std::string generated_text = response.substr(text_start, text_end - text_start);
+    
+    // Unescape JSON string
+    std::string unescaped_text;
+    for (size_t i = 0; i < generated_text.length(); i++) {
+        if (generated_text[i] == '\\' && i + 1 < generated_text.length()) {
+            switch (generated_text[i + 1]) {
+                case 'n': unescaped_text += '\n'; i++; break;
+                case 'r': unescaped_text += '\r'; i++; break;
+                case 't': unescaped_text += '\t'; i++; break;
+                case '"': unescaped_text += '"'; i++; break;
+                case '\\': unescaped_text += '\\'; i++; break;
+                default: unescaped_text += generated_text[i]; break;
+            }
+        } else {
+            unescaped_text += generated_text[i];
+        }
+    }
+    
+    // Decode Unicode escapes (like \u003e -> >)
+    unescaped_text = decodeUnicodeEscapes(unescaped_text);
     
     return unescaped_text;
 }
